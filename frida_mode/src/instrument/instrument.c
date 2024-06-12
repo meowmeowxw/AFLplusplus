@@ -463,6 +463,6 @@ uint32_t ijon_hashint(uint32_t old, uint32_t val){
 
 
 void ijon_map_set(uint32_t addr) {
-  printf("ijon_map_set: %lx\n", addr);
-  __afl_area_ptr[addr % MAP_SIZE] |= 1;
+  printf("[*] ijon_map_set | __afl_area_ptr: %lx\n", __afl_area_ptr);
+  __afl_area_ptr[addr % __afl_map_size] |= 1;
 }
