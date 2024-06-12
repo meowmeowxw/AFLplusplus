@@ -749,6 +749,16 @@ static void __afl_map_shm(void) {
 
   }
 
+
+  __afl_map_size = MAP_SIZE / 2;
+  fprintf(stderr,
+          "DEBUG: (3) id_str %s, __afl_area_ptr %p, __afl_area_initial %p, "
+          "__afl_area_ptr_dummy %p, __afl_map_addr 0x%llx, MAP_SIZE "
+          "%u, __afl_final_loc %u, __afl_map_size %u",
+          id_str == NULL ? "<null>" : id_str, __afl_area_ptr,
+          __afl_area_initial, __afl_area_ptr_dummy, __afl_map_addr, MAP_SIZE,
+          __afl_final_loc, __afl_map_size);
+
 }
 
 /* unmap SHM. */

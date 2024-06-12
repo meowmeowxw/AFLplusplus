@@ -2249,6 +2249,8 @@ int main(int argc, char **argv_orig, char **envp) {
 
     u32 old_map_size = map_size;
     map_size = afl->fsrv.real_map_size = afl->fsrv.map_size = MAP_SIZE;
+    map_size = afl->fsrv.ijon_real_map_size = afl->fsrv.ijon_map_size = MAP_SIZE;
+    fprintf(stderr, "[FUZZER] map_size: %x | ijon_map_size: %x\n", afl->fsrv.map_size, afl->fsrv.ijon_map_size);
     afl->virgin_bits = ck_realloc(afl->virgin_bits, map_size);
     afl->virgin_tmout = ck_realloc(afl->virgin_tmout, map_size);
     afl->virgin_crash = ck_realloc(afl->virgin_crash, map_size);
@@ -2488,6 +2490,8 @@ int main(int argc, char **argv_orig, char **envp) {
 
   }
 
+  afl->fsrv.real_map_size = afl->fsrv.map_size = MAP_SIZE / 2;
+  fprintf(stderr, "[FUZZER] before cull_queue\n");
   cull_queue(afl);
 
   // ensure we have at least one seed that is not disabled.
