@@ -449,3 +449,20 @@ void instrument_regs_format(int fd, char *format, ...) {
 
 }
 
+uint64_t ijon_simple_hash(uint64_t x) {
+    x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
+    x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
+    x = x ^ (x >> 31);
+    return x;
+}
+
+uint32_t ijon_hashint(uint32_t old, uint32_t val){
+  uint64_t input = (((uint64_t)(old))<<32) | ((uint64_t)(val));
+  return (uint32_t)(ijon_simple_hash(input));
+}
+
+
+void ijon_map_set(uint32_t addr) {
+  printf("ijon_map_set: %lx\n", addr);
+  __afl_area_ptr[addr % MAP_SIZE] |= 1;
+}

@@ -316,3 +316,10 @@ __attribute__((visibility("default"))) void js_api_set_verbose(void) {
 
 }
 
+__attribute__((visibility("default"))) void js_api_ijon_map_set(uint32_t addr) {
+  ijon_map_set(addr);
+}
+
+__attribute__((visibility("default"))) uint32_t js_api_ijon_hashint(uint32_t old, uint32_t val) {
+  return ijon_hashint(old, val);
+}

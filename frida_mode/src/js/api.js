@@ -326,6 +326,15 @@ class Afl {
     static jsApiGetSymbol(name) {
         return Afl.module.getExportByName(name);
     }
+
+    static IjonHashint(old, val) {
+        Afl.print("Inside IjonHashInt");
+        return Afl.jsApiIjonHashint(old, val);
+    }
+
+    static IjonMapSet(addr) {
+        Afl.jsApiIjonMapSet(addr);
+    }
 }
 /**
  * Field containing the `Module` object for `afl-frida-trace.so` (the FRIDA mode
@@ -377,3 +386,6 @@ Afl.jsApiSetVerbose = Afl.jsApiGetFunction("js_api_set_verbose", "void", []);
 Afl.jsApiWrite = new NativeFunction(
 /* tslint:disable-next-line:no-null-keyword */
 Module.getExportByName(null, "write"), "int", ["int", "pointer", "int"]);
+
+Afl.jsApiIjonMapSet = Afl.jsApiGetFunction("js_api_ijon_map_set", "void", ["uint32"]);
+Afl.jsApiIjonHashint = Afl.jsApiGetFunction("js_api_ijon_hashint", "uint32", ["uint32", "uint32"]);
