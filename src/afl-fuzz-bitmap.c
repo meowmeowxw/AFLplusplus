@@ -29,6 +29,25 @@
   #define NAME_MAX _XOPEN_NAME_MAX
 #endif
 
+bool ijon_new_max(afl_state_t *afl) {
+  u32 map_size = afl->fsrv.map_size;
+  // printf("[FUZZER] ijon_max init | map_size: %x, afl->virgin_bits: %p, afl->fsrv.trace_bits: %p\n", map_size, afl->virgin_bits, afl->fsrv.trace_bits);
+  u32 *virgin_max = (u32 *)((u8 *)afl->virgin_bits + map_size);
+  u32 *max_area = (u32 *)((u8 *)afl->fsrv.trace_bits + map_size);
+  u32 *end = (u32 *)((u8 *)max_area + map_size);
+
+  bool found = false;
+  for (u32 *curr = max_area; curr != end; curr += 1) {
+    if (*curr > *virgin_max) {
+      fprintf(stderr, "[FUZZER] found new max: *curr: %d, *virgin_max: %d\n", *curr, *virgin_max);
+      found = true;
+      *virgin_max = *curr;
+    }
+    virgin_max += 1;
+  }
+  return found;
+}
+
 /* Write bitmap to file. The bitmap is useful mostly for the secret
    -B option, to focus a separate fuzzing session on a particular
    interesting input without rediscovering all the others. */
@@ -454,6 +473,10 @@ void write_crash_readme(afl_state_t *afl) {
 
 u8 __attribute__((hot))
 save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
+
+  if (ijon_new_max(afl)) {
+    goto save_to_queue;
+  }
 
   if (unlikely(len == 0)) { return 0; }
 

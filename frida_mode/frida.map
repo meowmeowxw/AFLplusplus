@@ -52,6 +52,7 @@
     js_api_ijon_hashint;
     js_api_ijon_hashstr;
     js_api_ijon_hashmem;
+    js_api_ijon_max;
   local:
     *;
 };

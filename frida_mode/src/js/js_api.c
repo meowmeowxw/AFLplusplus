@@ -332,13 +332,13 @@ __attribute__((visibility("default"))) void js_api_ijon_push_state(uint32_t addr
   ijon_push_state(addr);
 }
 
-__attribute__((visibility("default"))) void js_api_ijon_max(uint32_t addr, uint64_t val) {
+__attribute__((visibility("default"))) void js_api_ijon_max(uint32_t addr, uint32_t val) {
   ijon_max(addr, val);
 }
 
-__attribute__((visibility("default"))) void js_api_ijon_min(uint32_t addr, uint64_t val) {
-  ijon_min(addr, val);
-}
+// __attribute__((visibility("default"))) void js_api_ijon_min(uint32_t addr, uint64_t val) {
+//   ijon_min(addr, val);
+// }
 
 __attribute__((visibility("default"))) uint32_t js_api_ijon_hashint(uint32_t old, uint32_t val) {
   return ijon_hashint(old, val);

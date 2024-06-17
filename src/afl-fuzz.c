@@ -2491,7 +2491,8 @@ int main(int argc, char **argv_orig, char **envp) {
   }
 
   afl->fsrv.real_map_size = afl->fsrv.map_size = MAP_SIZE / 2;
-  fprintf(stderr, "[FUZZER] before cull_queue\n");
+  memset(afl->virgin_bits + MAP_SIZE / 2, 0, MAP_SIZE / 2);
+  fprintf(stderr, "[FUZZER] before cull_queue | virgin_bits: %lx | virgin_bits_max: %lx\n", *(uint64_t *)afl->virgin_bits, *(uint64_t *)(afl->virgin_bits + (MAP_SIZE/2)));
   cull_queue(afl);
 
   // ensure we have at least one seed that is not disabled.
