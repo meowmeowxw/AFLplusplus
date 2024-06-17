@@ -1,4 +1,24 @@
 "use strict";
+
+function getInstructionPointer(context) {
+  let instructionPointer;
+  switch (Process.arch) {
+      case 'x64':
+          instructionPointer = context.rip;
+          break;
+      case 'x86':
+          instructionPointer = context.eip;
+          break;
+      case 'arm':
+      case 'arm64':
+          instructionPointer = context.pc;
+          break;
+      default:
+          throw new Error('Unsupported architecture: ' + Process.arch);
+  }
+  return parseInt(instructionPointer.toString(), 16);
+}
+
 class Afl {
     /**
      * This is equivalent to setting a value in `AFL_FRIDA_EXCLUDE_RANGES`,
@@ -327,14 +347,52 @@ class Afl {
         return Afl.module.getExportByName(name);
     }
 
-    static IjonHashint(old, val) {
-        Afl.print("Inside IjonHashInt");
-        return Afl.jsApiIjonHashint(old, val);
-    }
+    static IJON = class {
 
-    static IjonMapSet(addr) {
-        Afl.jsApiIjonMapSet(addr);
-    }
+      static hashint(old, val) {
+        return Afl.jsApiIjonHashint(old, val);
+      }
+      
+      static hashstr(old, val) {
+        return Afl.jsApiIjonHashstr(old, val);
+      }
+
+      static hashmem(old, val, len) {
+        return Afl.jsApiIjonHashmem(old, val, len);
+      }
+
+      static xor_state(val) {
+        Afl.jsApiIjonXorState(val);
+      }
+
+      static push_state(val) {
+        Afl.jsApiIjonPushState(val);
+      }
+
+      static map_set(context, addr) {
+        var value1 = 0;
+        var pc = getInstructionPointer(context);
+        
+        Afl.jsApiIjonMapSet(Afl.IJON.hashint(value1, pc) ^ (addr));
+      }
+      
+      static map_inc(addr) {
+        var value1 = 0;
+        var pc = getInstructionPointer(context);
+        
+        Afl.jsApiIjonMapInc(Afl.IJON.hashint(value1, pc) ^ (addr));
+      }
+
+      static max(addr, val) {
+        Afl.jsApiIjonMax(addr, val);
+      }
+
+      static min(addr, val) {
+        Afl.jsApiIjonMin(addr, val);
+      };
+
+    };
+
 }
 /**
  * Field containing the `Module` object for `afl-frida-trace.so` (the FRIDA mode
@@ -387,5 +445,12 @@ Afl.jsApiWrite = new NativeFunction(
 /* tslint:disable-next-line:no-null-keyword */
 Module.getExportByName(null, "write"), "int", ["int", "pointer", "int"]);
 
+Afl.jsApiIjonXorState = Afl.jsApiGetFunction("js_api_ijon_xor_state", "void", ["uint32"]);
+Afl.jsApiIjonPushState = Afl.jsApiGetFunction("js_api_ijon_push_state", "void", ["uint32"]);
+Afl.jsApiIjonMax = Afl.jsApiGetFunction("js_api_ijon_max", "void", ["uint32", "uint64"]);
+Afl.jsApiIjonMin = Afl.jsApiGetFunction("js_api_ijon_min", "void", ["uint32", "uint64"]);
 Afl.jsApiIjonMapSet = Afl.jsApiGetFunction("js_api_ijon_map_set", "void", ["uint32"]);
+Afl.jsApiIjonMapInc = Afl.jsApiGetFunction("js_api_ijon_map_inc", "void", ["uint32"]);
 Afl.jsApiIjonHashint = Afl.jsApiGetFunction("js_api_ijon_hashint", "uint32", ["uint32", "uint32"]);
+Afl.jsApiIjonHashstr = Afl.jsApiGetFunction("js_api_ijon_hashstr", "uint32", ["uint32", "pointer"]);
+Afl.jsApiIjonHashmem = Afl.jsApiGetFunction("js_api_ijon_hashmem", "uint32", ["uint32", "pointer", "uint32"]);

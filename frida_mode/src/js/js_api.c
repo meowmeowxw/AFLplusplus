@@ -320,6 +320,34 @@ __attribute__((visibility("default"))) void js_api_ijon_map_set(uint32_t addr) {
   ijon_map_set(addr);
 }
 
+__attribute__((visibility("default"))) void js_api_ijon_map_inc(uint32_t addr) {
+  ijon_map_inc(addr);
+}
+
+__attribute__((visibility("default"))) void js_api_ijon_xor_state(uint32_t addr) {
+  ijon_xor_state(addr);
+}
+
+__attribute__((visibility("default"))) void js_api_ijon_push_state(uint32_t addr) {
+  ijon_push_state(addr);
+}
+
+__attribute__((visibility("default"))) void js_api_ijon_max(uint32_t addr, uint64_t val) {
+  ijon_max(addr, val);
+}
+
+__attribute__((visibility("default"))) void js_api_ijon_min(uint32_t addr, uint64_t val) {
+  ijon_min(addr, val);
+}
+
 __attribute__((visibility("default"))) uint32_t js_api_ijon_hashint(uint32_t old, uint32_t val) {
   return ijon_hashint(old, val);
+}
+
+__attribute__((visibility("default"))) uint32_t js_api_ijon_hashstr(uint32_t old, char* val) {
+  return ijon_hashstr(old, val);
+}
+
+__attribute__((visibility("default"))) uint32_t js_api_ijon_hashmem(uint32_t old, char* val, uint32_t len) {
+  return ijon_hashmem(old, val, len);
 }

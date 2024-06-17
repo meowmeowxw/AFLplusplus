@@ -449,6 +449,9 @@ void instrument_regs_format(int fd, char *format, ...) {
 
 }
 
+__thread u32 __afl_state;
+__thread u32 __afl_state_log;
+
 uint64_t ijon_simple_hash(uint64_t x) {
     x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
     x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
@@ -461,8 +464,48 @@ uint32_t ijon_hashint(uint32_t old, uint32_t val){
   return (uint32_t)(ijon_simple_hash(input));
 }
 
+uint32_t ijon_hashmem(uint32_t old, char* val, uint32_t len){
+  old = ijon_hashint(old,len);
+  for(size_t i = 0; i < len ; i++){
+    old = ijon_hashint(old, val[i]);
+  }
+  return old;
+}
+
+uint32_t ijon_hashstr(uint32_t old, char* val){
+  return ijon_hashmem(old, val, strlen(val));
+}
+
+void ijon_xor_state(uint32_t val) {
+  __afl_state = (__afl_state^val)%MAP_SIZE;
+}
+
+void ijon_push_state(uint32_t val) {
+  ijon_xor_state(__afl_state_log);
+  __afl_state_log = (__afl_state_log << 8) | (val & 0xff);
+  ijon_xor_state(__afl_state_log);
+}
 
 void ijon_map_set(uint32_t addr) {
-  printf("[*] ijon_map_set | __afl_area_ptr: %lx\n", __afl_area_ptr);
-  __afl_area_ptr[addr % __afl_map_size] |= 1;
+  //printf("[*] ijon_map_set | __afl_area_ptr: %lx\n", __afl_area_ptr[addr % __afl_map_size]);
+  __afl_area_ptr[(__afl_state ^ addr) % __afl_map_size] |= 1;
+}
+
+void ijon_map_inc(uint32_t addr) {
+  //printf("[*] ijon_map_inc | __afl_area_ptr: %lx\n", __afl_area_ptr[addr % __afl_map_size]);
+  __afl_area_ptr[(__afl_state ^ addr) % __afl_map_size] += 1;
+}
+
+uint64_t  __afl_max_initial[MAXMAP_SIZE];
+uint64_t* __afl_max_ptr = __afl_max_initial;
+
+void ijon_max(uint32_t addr, uint64_t val){
+  if(__afl_max_ptr[addr%MAXMAP_SIZE] < val) {
+    __afl_max_ptr[addr%MAXMAP_SIZE] = val;
+  }
+}
+
+void ijon_min(uint32_t addr, uint64_t val){
+  val = 0xffffffffffffffff-val;
+  ijon_max(addr, val);
 }

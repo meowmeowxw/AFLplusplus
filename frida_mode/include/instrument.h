@@ -23,6 +23,8 @@ extern guint64  instrument_fixed_seed;
 extern uint8_t *__afl_area_ptr;
 extern uint32_t __afl_map_size;
 
+#define MAXMAP_SIZE            (512)
+
 extern __thread guint64 *instrument_previous_pc_addr;
 
 extern gboolean instrument_cache_enabled;
@@ -73,7 +75,14 @@ void instrument_write_regs(GumCpuContext *cpu_context, gpointer user_data);
 void instrument_regs_format(int fd, char *format, ...);
 
 uint32_t ijon_hashint(uint32_t old, uint32_t val);
+uint32_t ijon_hashstr(uint32_t old, char* val);
+uint32_t ijon_hashmem(uint32_t old, char* val, uint32_t len);
 void ijon_map_set(uint32_t addr);
+void ijon_map_inc(uint32_t addr);
+void ijon_xor_state(uint32_t val);
+void ijon_push_state(uint32_t val);
+void ijon_max(uint32_t addr, uint64_t val);
+void ijon_min(uint32_t addr, uint64_t val);
 
 #endif
 
