@@ -46,6 +46,9 @@ static int regs_fd = -1;
 __thread guint64  instrument_previous_pc;
 __thread guint64 *instrument_previous_pc_addr = NULL;
 
+__thread guint32 __afl_state = 0;
+__thread guint32 __afl_state_log = 0;
+
 typedef struct {
 
   GumAddress address;
@@ -449,9 +452,6 @@ void instrument_regs_format(int fd, char *format, ...) {
 
 }
 
-__thread u32 __afl_state;
-__thread u32 __afl_state_log;
-
 uint64_t ijon_simple_hash(uint64_t x) {
     x = (x ^ (x >> 30)) * UINT64_C(0xbf58476d1ce4e5b9);
     x = (x ^ (x >> 27)) * UINT64_C(0x94d049bb133111eb);
@@ -477,7 +477,7 @@ uint32_t ijon_hashstr(uint32_t old, char* val){
 }
 
 void ijon_xor_state(uint32_t val) {
-  __afl_state = (__afl_state^val)%MAP_SIZE;
+  __afl_state = (__afl_state ^ val) % __afl_map_size;
 }
 
 void ijon_push_state(uint32_t val) {
@@ -493,19 +493,5 @@ void ijon_map_set(uint32_t addr) {
 
 void ijon_map_inc(uint32_t addr) {
   //printf("[*] ijon_map_inc | __afl_area_ptr: %lx\n", __afl_area_ptr[addr % __afl_map_size]);
-  __afl_area_ptr[(__afl_state ^ addr) % __afl_map_size] += 1;
-}
-
-uint64_t  __afl_max_initial[MAXMAP_SIZE];
-uint64_t* __afl_max_ptr = __afl_max_initial;
-
-void ijon_max(uint32_t addr, uint64_t val){
-  if(__afl_max_ptr[addr%MAXMAP_SIZE] < val) {
-    __afl_max_ptr[addr%MAXMAP_SIZE] = val;
-  }
-}
-
-void ijon_min(uint32_t addr, uint64_t val){
-  val = 0xffffffffffffffff-val;
-  ijon_max(addr, val);
+  instrument_increment_map((__afl_state ^ addr) % __afl_map_size);
 }

@@ -369,26 +369,26 @@ class Afl {
         Afl.jsApiIjonPushState(val);
       }
 
-      static map_set(context, addr) {
-        var value1 = 0;
+      static map_set(context, val) {
         var pc = getInstructionPointer(context);
-        
-        Afl.jsApiIjonMapSet(Afl.IJON.hashint(value1, pc) ^ (addr));
+        // pc = 0x555500001010
+        Afl.print(`map_set`)
+        Afl.jsApiIjonMapSet((pc & 0xffffffff) ^ val);
       }
       
-      static map_inc(addr) {
-        var value1 = 0;
+      static map_inc(context, val) {
         var pc = getInstructionPointer(context);
-        
-        Afl.jsApiIjonMapInc(Afl.IJON.hashint(value1, pc) ^ (addr));
+        Afl.jsApiIjonMapInc((pc & 0xffffffff) ^ val);
       }
 
-      static max(addr, val) {
-        Afl.jsApiIjonMax(addr, val);
+      static max(context, val) {
+        console.log("ERROR");
+        // Afl.jsApiIjonMax(addr, val);
       }
 
-      static min(addr, val) {
-        Afl.jsApiIjonMin(addr, val);
+      static min(context, val) {
+        console.log("TODO");
+        // Afl.jsApiIjonMin(addr, val);
       };
 
     };
@@ -447,8 +447,8 @@ Module.getExportByName(null, "write"), "int", ["int", "pointer", "int"]);
 
 Afl.jsApiIjonXorState = Afl.jsApiGetFunction("js_api_ijon_xor_state", "void", ["uint32"]);
 Afl.jsApiIjonPushState = Afl.jsApiGetFunction("js_api_ijon_push_state", "void", ["uint32"]);
-Afl.jsApiIjonMax = Afl.jsApiGetFunction("js_api_ijon_max", "void", ["uint32", "uint64"]);
-Afl.jsApiIjonMin = Afl.jsApiGetFunction("js_api_ijon_min", "void", ["uint32", "uint64"]);
+// Afl.jsApiIjonMax = Afl.jsApiGetFunction("js_api_ijon_max", "void", ["uint32", "uint64"]);
+// Afl.jsApiIjonMin = Afl.jsApiGetFunction("js_api_ijon_min", "void", ["uint32", "uint64"]);
 Afl.jsApiIjonMapSet = Afl.jsApiGetFunction("js_api_ijon_map_set", "void", ["uint32"]);
 Afl.jsApiIjonMapInc = Afl.jsApiGetFunction("js_api_ijon_map_inc", "void", ["uint32"]);
 Afl.jsApiIjonHashint = Afl.jsApiGetFunction("js_api_ijon_hashint", "uint32", ["uint32", "uint32"]);
