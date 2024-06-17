@@ -30,21 +30,30 @@
 #endif
 
 bool ijon_new_max(afl_state_t *afl) {
+  // TODO: Allocate a max_map inside afl instead of using virgin_bits
+  // TODO: Fix for loop
   u32 map_size = afl->fsrv.map_size;
   // printf("[FUZZER] ijon_max init | map_size: %x, afl->virgin_bits: %p, afl->fsrv.trace_bits: %p\n", map_size, afl->virgin_bits, afl->fsrv.trace_bits);
   u32 *virgin_max = (u32 *)((u8 *)afl->virgin_bits + map_size);
   u32 *max_area = (u32 *)((u8 *)afl->fsrv.trace_bits + map_size);
-  u32 *end = (u32 *)((u8 *)max_area + map_size);
+  // u32 *end = (u32 *)((u8 *)max_area + map_size);
 
   bool found = false;
-  for (u32 *curr = max_area; curr != end; curr += 1) {
-    if (*curr > *virgin_max) {
-      fprintf(stderr, "[FUZZER] found new max: *curr: %d, *virgin_max: %d\n", *curr, *virgin_max);
+  for (int i = 0; i < 128; i++) {
+    if (max_area[i] > virgin_max[i]) {
+      fprintf(stderr, "[FUZZER] found new max: virgin_max[%d]: %d, max_area[%d]: %d\n", i, virgin_max[i], i, max_area[i]);
       found = true;
-      *virgin_max = *curr;
+      virgin_max[i] = max_area[i];
     }
-    virgin_max += 1;
   }
+  // for (u32 *curr = max_area; curr != end; curr += 1) {
+  //   if (*curr > *virgin_max) {
+  //     fprintf(stderr, "[FUZZER] found new max: *curr: %d, *virgin_max: %d\n", *curr, *virgin_max);
+  //     found = true;
+  //     *virgin_max = *curr;
+  //   }
+  //   virgin_max += 1;
+  // }
   return found;
 }
 
@@ -474,7 +483,17 @@ void write_crash_readme(afl_state_t *afl) {
 u8 __attribute__((hot))
 save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
 
+  u8  fn[PATH_MAX];
+  u8 *queue_fn = "";
+  u8  new_bits = 0, keeping = 0, res, classified = 0, is_timeout = 0,
+     need_hash = 1;
+  s32 fd;
+  u64 cksum = 0;
+
   if (ijon_new_max(afl)) {
+    new_bits = 2;
+    keeping = 1;
+    need_hash = 0;
     goto save_to_queue;
   }
 
@@ -497,12 +516,6 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
 
   }
 
-  u8  fn[PATH_MAX];
-  u8 *queue_fn = "";
-  u8  new_bits = 0, keeping = 0, res, classified = 0, is_timeout = 0,
-     need_hash = 1;
-  s32 fd;
-  u64 cksum = 0;
 
   /* Update path frequency. */
 
