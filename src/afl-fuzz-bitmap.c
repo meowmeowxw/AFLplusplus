@@ -480,6 +480,7 @@ void write_crash_readme(afl_state_t *afl) {
    save or queue the input test case for further analysis if so. Returns 1 if
    entry is saved, 0 otherwise. */
 
+static int sii = 0;
 u8 __attribute__((hot))
 save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
 
@@ -489,11 +490,20 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
      need_hash = 1;
   s32 fd;
   u64 cksum = 0;
+  char buf[300];
+  bool maximised = false;
+  memset(buf, 0, 300);
 
   if (ijon_new_max(afl)) {
+    maximised = true;
     new_bits = 2;
     keeping = 1;
     need_hash = 0;
+    // afl->top_rated[0] = afl->queue_top;
+    // afl->queue_top->favored = 1;
+    // fprintf(stderr, "[FUZZER] queue entry: %s, favored: %d\n", afl->queue_top->fname, afl->queue_top->favored);
+    // sprintf(buf, "./binaries/mario < %s", afl->queue_top->fname);
+    // fprintf(stderr, "[FUZZER] buf: %s\n", buf);
     goto save_to_queue;
   }
 
@@ -598,7 +608,17 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
 
     }
 
+    if (maximised) {
+      fprintf(stderr, "[FUZZER] queue entry: %s, favored: %d\n", queue_fn, afl->queue_top->favored);
+      sprintf(buf, "./binaries/mario < %s", queue_fn);
+      fprintf(stderr, "[FUZZER] buf: %s\n", buf);
+      sii++;
+      // if (sii == 15) {
+      //   exit(0);
+      // }
+    }
     add_to_queue(afl, queue_fn, len, 0);
+    afl->queue_top->favored = 1;
 
     if (unlikely(afl->fuzz_mode) &&
         likely(afl->switch_fuzz_mode && !afl->non_instrumented_mode)) {
