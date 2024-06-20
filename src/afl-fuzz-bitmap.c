@@ -29,7 +29,7 @@
   #define NAME_MAX _XOPEN_NAME_MAX
 #endif
 
-u32 ijon_new_max(afl_state_t *afl) {
+void ijon_new_max(afl_state_t *afl, u32 *maximised) {
   // TODO: Allocate a max_map inside afl instead of using virgin_bits
   // TODO: Fix for loop
   // TODO: It is possible to maximise more than one variable with one execution
@@ -38,13 +38,13 @@ u32 ijon_new_max(afl_state_t *afl) {
   u32 *virgin_max = (u32 *)((u8 *)afl->virgin_bits + map_size);
   u32 *max_area = (u32 *)((u8 *)afl->fsrv.trace_bits + map_size);
 
-  u32 found = 0;
   for (int i = 0; i < 128; i++) {
     if (max_area[i] > virgin_max[i]) {
-      found = i;
-      fprintf(stderr, "[FUZZER] found new max: virgin_max[%d]: %d, max_area[%d]: %d | found: %d\n", i, virgin_max[i], i, max_area[i], found);
+      fprintf(stderr, "[FUZZER] found new max: virgin_max[%d]: %d, max_area[%d]: %d\n", i, virgin_max[i], i, max_area[i]);
+      *maximised = i;
       virgin_max[i] = max_area[i];
-      return found;
+      maximised++;
+      // return found;
     }
   }
   // for (u32 *curr = max_area; curr != end; curr += 1) {
@@ -55,7 +55,7 @@ u32 ijon_new_max(afl_state_t *afl) {
   //   }
   //   virgin_max += 1;
   // }
-  return found;
+  return; // maximised;
 }
 
 
@@ -492,11 +492,12 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
   s32 fd;
   u64 cksum = 0;
   char buf[300];
-  u32 maximised = 0;
+  u32 maximised[128] = {0};
+  memset(maximised, 0, 128 * sizeof(int));
   memset(buf, 0, 300);
 
-  maximised = ijon_new_max(afl);
-  if (maximised) {
+  ijon_new_max(afl, maximised);
+  if (*maximised) {
     // new_bits = 2;
     keeping = 1;
     need_hash = 0;
@@ -609,16 +610,22 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
 
     }
 
-    if (maximised) {
-      fprintf(stderr, "[FUZZER] queue entry: %s, favored: %d\n", queue_fn, afl->queue_top->favored);
-      sprintf(buf, "./binaries/mario < %s", queue_fn);
-      fprintf(stderr, "[FUZZER] buf: %s\n", buf);
-      fprintf(stderr, "[FUZZER] add_to_queue_ijon: %d\n", maximised);
-      add_to_queue_ijon(afl, queue_fn, len, maximised);
-      goto possible_states;
+    if (*maximised) {
+      // fprintf(stderr, "[FUZZER] queue entry: %s, favored: %d\n", queue_fn, afl->queue_top->favored);
+      // sprintf(buf, "./binaries/mario < %s", queue_fn);
+      // fprintf(stderr, "[FUZZER] buf: %s\n", buf);
+      // u32 pos = 0;
+      // while (*maximised) {
+      //   pos = *maximised;
+      //   maximised++;
+      //   fprintf(stderr, "[FUZZER] add_to_queue_ijon: %d\n", pos);
+      //   add_to_queue_ijon(afl, queue_fn, len, pos);
+      // }
+      // free(maximised);
+      // goto possible_states;
       // Modify top favored when using add_to_queue: Old method
-      // add_to_queue(afl, queue_fn, len, 0);
-      // afl->queue_top->favored = 1;
+      add_to_queue(afl, queue_fn, len, 0);
+      afl->queue_top->favored = 1;
     } else {
       add_to_queue(afl, queue_fn, len, 0);
     }
