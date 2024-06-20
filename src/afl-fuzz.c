@@ -2260,7 +2260,8 @@ int main(int argc, char **argv_orig, char **envp) {
     afl->clean_trace_custom = ck_realloc(afl->clean_trace_custom, map_size);
     afl->first_trace = ck_realloc(afl->first_trace, map_size);
     afl->map_tmp_buf = ck_realloc(afl->map_tmp_buf, map_size);
-
+    afl->queue_ijon = ck_realloc(afl->queue_ijon, map_size * sizeof(void *));
+    afl->queued_items_ijon = 0;
     if (old_map_size < map_size) {
 
       memset(afl->var_bytes + old_map_size, 0, map_size - old_map_size);

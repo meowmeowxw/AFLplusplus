@@ -614,6 +614,7 @@ typedef struct afl_state {
       clear_screen;                     /* Window resized?                  */
 
   u32 queued_items,                     /* Total number of queued testcases */
+      queued_items_ijon,                /* Total number of ijon queued testcases */
       queued_variable,                  /* Testcases with variable behavior */
       queued_at_start,                  /* Total number of initial inputs   */
       queued_discovered,                /* Items discovered during this run */
@@ -709,6 +710,7 @@ typedef struct afl_state {
 
   // growing buf
   struct queue_entry **queue_buf;
+  struct queue_entry **queue_ijon;     /* Queue buffer for ijon inputs      */
 
   struct queue_entry **top_rated;           /* Top entries for bitmap bytes */
 
@@ -1170,6 +1172,7 @@ void        deinit_py(void *);
 void mark_as_det_done(afl_state_t *, struct queue_entry *);
 void mark_as_variable(afl_state_t *, struct queue_entry *);
 void mark_as_redundant(afl_state_t *, struct queue_entry *, u8);
+void add_to_queue_ijon(afl_state_t *, u8 *, u32, u32);
 void add_to_queue(afl_state_t *, u8 *, u32, u8);
 void destroy_queue(afl_state_t *);
 void update_bitmap_score(afl_state_t *, struct queue_entry *);
