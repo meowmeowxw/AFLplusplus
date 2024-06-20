@@ -74,6 +74,7 @@ void instrument_cache(const cs_insn *instr, GumStalkerOutput *output);
 void instrument_write_regs(GumCpuContext *cpu_context, gpointer user_data);
 void instrument_regs_format(int fd, char *format, ...);
 
+uint64_t ijon_simple_hash(uint64_t x);
 uint32_t ijon_hashint(uint32_t old, uint32_t val);
 uint32_t ijon_hashstr(uint32_t old, char* val);
 uint32_t ijon_hashmem(uint32_t old, char* val, uint32_t len);

@@ -123,7 +123,7 @@ __attribute__((hot)) static void on_basic_block(GumCpuContext *context,
 
   }
 
-  edge = current_pc ^ *instrument_previous_pc_addr;
+  edge = current_pc ^ *instrument_previous_pc_addr ^ ijon_simple_hash(__afl_state);
 
   instrument_increment_map(edge);
 
