@@ -22,6 +22,7 @@ extern guint64  instrument_fixed_seed;
 
 extern uint8_t *__afl_area_ptr;
 extern uint32_t __afl_map_size;
+extern uint32_t __afl_ijon_map_size;
 
 #define MAXMAP_SIZE            (512)
 

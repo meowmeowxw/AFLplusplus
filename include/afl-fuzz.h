@@ -204,7 +204,7 @@ struct queue_entry {
   u8 *fname;                            /* File name for the test case      */
   u32 len;                              /* Input length                     */
   u32 id;                               /* entry number in queue_buf        */
-  int32_t ijon_index;                          /* is an ijon element ?             */
+  u8 is_ijon;                           /* is an ijon entry ?               */
 
   u8 colorized,                         /* Do not run redqueen stage again  */
       cal_failed;                       /* Calibration failed?              */
@@ -568,7 +568,6 @@ typedef struct afl_state {
       havoc_max_mult,                   /* havoc multiplier                 */
       skip_deterministic,               /* Skip deterministic stages?       */
       use_splicing,                     /* Recombine input files?           */
-      use_ijon,                         /* Is ijon in use?                  */
       non_instrumented_mode,            /* Run in non-instrumented mode?    */
       score_changed,                    /* Scoring for favorites changed?   */
       resuming_fuzz,                    /* Resuming an older fuzzing job?   */
@@ -602,6 +601,9 @@ typedef struct afl_state {
   u8 *virgin_bits,                      /* Regions yet untouched by fuzzing */
       *virgin_tmout,                    /* Bits we haven't seen in tmouts   */
       *virgin_crash;                    /* Bits we haven't seen in crashes  */
+
+  u32 *virgin_bits_ijon;                /* Map used by ijon max to store the 
+                                           global maximums                  */
 
   double *alias_probability;            /* alias weighted probabilities     */
   u32    *alias_table;                /* alias weighted random lookup table */
@@ -712,7 +714,8 @@ typedef struct afl_state {
 
   // growing buf
   struct queue_entry **queue_buf;
-  u32 *queue_ijon;                      /* Queue indexes for ijon inputs      */
+  u32 *queue_ijon;                      /* Indexes of ijon entries that are
+                                           stored inside queue_buf          */
 
   struct queue_entry **top_rated;           /* Top entries for bitmap bytes */
 
@@ -1174,12 +1177,12 @@ void        deinit_py(void *);
 void mark_as_det_done(afl_state_t *, struct queue_entry *);
 void mark_as_variable(afl_state_t *, struct queue_entry *);
 void mark_as_redundant(afl_state_t *, struct queue_entry *, u8);
-void add_to_queue_ijon(afl_state_t *, u8 *, u32, u32);
 void add_to_queue(afl_state_t *, u8 *, u32, u8);
 void destroy_queue(afl_state_t *);
 void update_bitmap_score(afl_state_t *, struct queue_entry *);
 void cull_queue(afl_state_t *);
 u32  calculate_score(afl_state_t *, struct queue_entry *);
+s32  select_next_queue_entry_ijon(afl_state_t *afl, u8 n);
 
 /* Bitmap */
 

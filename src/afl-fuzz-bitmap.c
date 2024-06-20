@@ -29,36 +29,27 @@
   #define NAME_MAX _XOPEN_NAME_MAX
 #endif
 
-void ijon_new_max(afl_state_t *afl, u32 *maximised) {
-  // TODO: Allocate a max_map inside afl instead of using virgin_bits
-  // TODO: Fix for loop
-  // TODO: It is possible to maximise more than one variable with one execution
-  u32 map_size = afl->fsrv.map_size;
-  // printf("[FUZZER] ijon_max init | map_size: %x, afl->virgin_bits: %p, afl->fsrv.trace_bits: %p\n", map_size, afl->virgin_bits, afl->fsrv.trace_bits);
-  u32 *virgin_max = (u32 *)((u8 *)afl->virgin_bits + map_size);
-  u32 *max_area = (u32 *)((u8 *)afl->fsrv.trace_bits + map_size);
+/* Check if the new execution resulted in new maximums.
+   It writes inside the maximised array the indexes of variables that were maximised */
 
-  for (int i = 0; i < 128; i++) {
+void ijon_new_max(afl_state_t *afl, u32 *maximised) {
+  // printf("[FUZZER] ijon_max init | afl->fsrv.trace_bits: %p, afl->fsrv.ijon_bits: %p\n", afl->fsrv.trace_bits, afl->fsrv.ijon_bits);
+  u32 *virgin_max = afl->virgin_bits_ijon;
+  u32 *max_area = (u32 *)((u8 *)afl->fsrv.trace_bits + afl->fsrv.map_size);
+
+  for (u32 i = 0; i < afl->fsrv.ijon_map_size; i++) {
     if (max_area[i] > virgin_max[i]) {
+      // If this is the first time that we maximise this variable increase number of
+      // queued entries
       if (virgin_max[i] == 0) {
         afl->queued_items_ijon++;
       }
       fprintf(stderr, "[FUZZER] found new max: virgin_max[%d]: %d, max_area[%d]: %d\n", i, virgin_max[i], i, max_area[i]);
       *maximised = i;
-      virgin_max[i] = max_area[i];
       maximised++;
-      // return found;
+      virgin_max[i] = max_area[i];
     }
   }
-  // for (u32 *curr = max_area; curr != end; curr += 1) {
-  //   if (*curr > *virgin_max) {
-  //     fprintf(stderr, "[FUZZER] found new max: *curr: %d, *virgin_max: %d\n", *curr, *virgin_max);
-  //     found = true;
-  //     *virgin_max = *curr;
-  //   }
-  //   virgin_max += 1;
-  // }
-  return; // maximised;
 }
 
 
@@ -494,21 +485,11 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
      need_hash = 1;
   s32 fd;
   u64 cksum = 0;
-  char buf[300];
-  u32 maximised[128] = {0};
-  memset(maximised, 0, 128 * sizeof(int));
-  memset(buf, 0, 300);
+  u32 maximised[afl->fsrv.ijon_map_size];
+  memset(maximised, 0, afl->fsrv.ijon_map_size * sizeof(u32));
 
   ijon_new_max(afl, maximised);
   if (*maximised) {
-    new_bits = 2;
-    keeping = 1;
-    need_hash = 0;
-    // afl->top_rated[0] = afl->queue_top;
-    // afl->queue_top->favored = 1;
-    // fprintf(stderr, "[FUZZER] queue entry: %s, favored: %d\n", afl->queue_top->fname, afl->queue_top->favored);
-    // sprintf(buf, "./binaries/mario < %s", afl->queue_top->fname);
-    // fprintf(stderr, "[FUZZER] buf: %s\n", buf);
     goto save_to_queue;
   }
 
@@ -613,22 +594,25 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
 
     }
 
-    if (*maximised) {
-      // fprintf(stderr, "[FUZZER] queue entry: %s, favored: %d\n", queue_fn, afl->queue_top->favored);
-      // sprintf(buf, "./binaries/mario < %s", queue_fn);
-      // fprintf(stderr, "[FUZZER] buf: %s\n", buf);
-      add_to_queue(afl, queue_fn, len, 0);
-      afl->queue_top->favored = 1;
-      for (int i = 0; i < 128; i++) {
+    add_to_queue(afl, queue_fn, len, 0);
+    if (unlikely(*maximised)) {
+      new_bits = 2;
+      keeping = 1;
+      need_hash = 0;
+      for (u32 i = 0; i < afl->fsrv.ijon_map_size; i++) {
         if (maximised[i] == 0) {
           break;
         }
+        fprintf(stderr, "[FUZZER] update inside queue_ijon[%u] index: %u\n",
+                maximised[i], afl->queued_items - 1);
+        // Overwrite / write the best maximum for variable maximised[i]
+        // with the index of the top of the queue (current entry)
         afl->queue_ijon[maximised[i]] = afl->queued_items - 1;
       }
-      afl->queue_top->ijon_index = 1;
+      afl->queue_top->is_ijon = 1;
+      afl->queue_top->favored = 1;
     } else {
-      add_to_queue(afl, queue_fn, len, 0);
-      afl->queue_top->ijon_index = -1;
+      afl->queue_top->is_ijon = 0;
     }
 
     if (unlikely(afl->fuzz_mode) &&
@@ -716,8 +700,6 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
     keeping = 1;
 
   }
-
-  possible_states:
 
   switch (fault) {
 
