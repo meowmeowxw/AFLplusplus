@@ -204,6 +204,7 @@ struct queue_entry {
   u8 *fname;                            /* File name for the test case      */
   u32 len;                              /* Input length                     */
   u32 id;                               /* entry number in queue_buf        */
+  int32_t ijon_index;                          /* is an ijon element ?             */
 
   u8 colorized,                         /* Do not run redqueen stage again  */
       cal_failed;                       /* Calibration failed?              */
@@ -567,6 +568,7 @@ typedef struct afl_state {
       havoc_max_mult,                   /* havoc multiplier                 */
       skip_deterministic,               /* Skip deterministic stages?       */
       use_splicing,                     /* Recombine input files?           */
+      use_ijon,                         /* Is ijon in use?                  */
       non_instrumented_mode,            /* Run in non-instrumented mode?    */
       score_changed,                    /* Scoring for favorites changed?   */
       resuming_fuzz,                    /* Resuming an older fuzzing job?   */
@@ -710,7 +712,7 @@ typedef struct afl_state {
 
   // growing buf
   struct queue_entry **queue_buf;
-  struct queue_entry **queue_ijon;     /* Queue buffer for ijon inputs      */
+  u32 *queue_ijon;                      /* Queue indexes for ijon inputs      */
 
   struct queue_entry **top_rated;           /* Top entries for bitmap bytes */
 

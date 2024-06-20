@@ -611,26 +611,26 @@ static u8 check_if_text(afl_state_t *afl, struct queue_entry *q) {
 
 /* Append to ijon queue*/
 
-void add_to_queue_ijon(afl_state_t *afl, u8 *fname, u32 len, u32 position) {
-  struct queue_entry *q =
-      (struct queue_entry *)ck_alloc(sizeof(struct queue_entry));
-
-  q->fname = fname;
-  q->len = len;
-  q->depth = afl->cur_depth + 1;
-  q->passed_det = 0;
-  q->trace_mini = NULL;
-  q->testcase_buf = NULL;
-  q->mother = afl->queue_cur;
-  q->weight = 1.0;
-  q->perf_score = 100;
-  if (afl->queue_ijon[position] == NULL) {
-    afl->queued_items_ijon++;
-    fprintf(stderr, "[FUZZER] afl->queued_items_ijon: %d\n", afl->queued_items_ijon);
-  }
-  afl->queue_ijon[position] = q;
-
-}
+// void add_to_queue_ijon(afl_state_t *afl, u8 *fname, u32 len, u32 position) {
+//   struct queue_entry *q =
+//       (struct queue_entry *)ck_alloc(sizeof(struct queue_entry));
+// 
+//   q->fname = fname;
+//   q->len = len;
+//   q->depth = afl->cur_depth + 1;
+//   q->passed_det = 0;
+//   q->trace_mini = NULL;
+//   q->testcase_buf = NULL;
+//   q->mother = afl->queue_cur;
+//   q->weight = 1.0;
+//   q->perf_score = 100;
+//   if (afl->queue_ijon[position] == NULL) {
+//     afl->queued_items_ijon++;
+//     fprintf(stderr, "[FUZZER] afl->queued_items_ijon: %d\n", afl->queued_items_ijon);
+//   }
+//   afl->queue_ijon[position] = q;
+// 
+// }
 
 
 /* Append new test case to the queue. */

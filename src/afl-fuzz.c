@@ -46,6 +46,35 @@
 extern u64 time_spent_working;
 #endif
 
+int32_t select_next_queue_entry_ijon(afl_state_t *afl)  {
+  bool should_schedule = (random() % 100) > 50 && afl->queued_items_ijon > 0;
+  if (!should_schedule) {
+    return -1;
+  }
+  u32 map_size = afl->fsrv.map_size;
+  u32 *virgin_max = (u32 *)((u8 *)afl->virgin_bits + map_size);
+  uint32_t rnd = random() % afl->queued_items_ijon;
+  // uint32_t pick_random = random() % 100 > 80;
+  fprintf(stderr, "[FUZZER] get_ijon_input | scheduling %d, rnd: %d\n", afl->queue_ijon[rnd], rnd);
+  return afl->queue_ijon[rnd];
+
+  // for (int i = 0; i < 128; i++) {
+  //   if (virgin_max[i] > 0) {
+  //     if (rnd == 0) {
+  //       fprintf(stderr, "[FUZZER] get_ijon_input | scheduling %d\n", afl->queue_ijon[i]);
+  //       return afl->queue_ijon[i];
+  //     }
+  //     rnd -= 1;
+  //   }
+  // }
+  // for (u32 i = afl->queued_items - 1; i >= 0; i--) {
+  //   if (afl->queue_buf[i]->ijon_index != -1) {
+  //     return i;
+  //   }
+  // }
+  return 1;
+}
+
 static void at_exit() {
 
   s32   i, pid1 = 0, pid2 = 0, pgrp = -1;
@@ -2864,11 +2893,18 @@ int main(int argc, char **argv_orig, char **envp) {
 
           }
 
-          do {
+          int32_t current_entry = select_next_queue_entry_ijon(afl);
+          if (current_entry == -1) {
+            do {
 
-            afl->current_entry = select_next_queue_entry(afl);
+              fprintf(stderr, "[FUZZER] select next queue entry\n");
+              afl->current_entry = select_next_queue_entry(afl);
 
-          } while (unlikely(afl->current_entry >= afl->queued_items));
+            } while (unlikely(afl->current_entry >= afl->queued_items));
+          } else {
+            fprintf(stderr, "[FUZZER] selected element: %d\n", current_entry);
+            afl->current_entry = current_entry;
+          }
 
           afl->queue_cur = afl->queue_buf[afl->current_entry];
 
