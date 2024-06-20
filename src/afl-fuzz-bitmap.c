@@ -614,18 +614,17 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
       // fprintf(stderr, "[FUZZER] queue entry: %s, favored: %d\n", queue_fn, afl->queue_top->favored);
       // sprintf(buf, "./binaries/mario < %s", queue_fn);
       // fprintf(stderr, "[FUZZER] buf: %s\n", buf);
-      // u32 pos = 0;
-      // while (*maximised) {
-      //   pos = *maximised;
-      //   maximised++;
-      //   fprintf(stderr, "[FUZZER] add_to_queue_ijon: %d\n", pos);
-      //   add_to_queue_ijon(afl, queue_fn, len, pos);
-      // }
-      // free(maximised);
-      // goto possible_states;
+      for (int i = 0; i < 128; i++) {
+        if (maximised[i] == 0) {
+          break;
+        }
+        fprintf(stderr, "[FUZZER] add_to_queue_ijon: %d\n", maximised[i]);
+        add_to_queue_ijon(afl, queue_fn, len, maximised[i]);
+      }
+      goto possible_states;
       // Modify top favored when using add_to_queue: Old method
-      add_to_queue(afl, queue_fn, len, 0);
-      afl->queue_top->favored = 1;
+      // add_to_queue(afl, queue_fn, len, 0);
+      // afl->queue_top->favored = 1;
     } else {
       add_to_queue(afl, queue_fn, len, 0);
     }
