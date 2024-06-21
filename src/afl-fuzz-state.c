@@ -746,6 +746,9 @@ void afl_state_deinit(afl_state_t *afl) {
   ck_free(afl->first_trace);
   ck_free(afl->map_tmp_buf);
 
+  ck_free(afl->virgin_bits_ijon);
+  ck_free(afl->queue_ijon);
+
   list_remove(&afl_states, afl);
 
 }
