@@ -101,6 +101,7 @@ typedef struct afl_forkserver {
   /* a program that includes afl-forkserver needs to define these */
 
   u8 *trace_bits;                       /* SHM with instrumentation bitmap  */
+  u32 *ijon_bits;                       /* SHM with ijon bitmap             */
 
   s32 fsrv_pid,                         /* PID of the fork server           */
       child_pid,                        /* PID of the fuzzed program        */
@@ -118,6 +119,8 @@ typedef struct afl_forkserver {
   u32 init_tmout;                       /* Configurable init timeout (ms)   */
   u32 map_size;                         /* map size used by the target      */
   u32 real_map_size;                    /* real map size, unaligned         */
+  u32 ijon_map_size;                    /* ijon map size used by the target */
+  u32 ijon_real_map_size;               /* ijon map size used by the target */
   u32 snapshot;                         /* is snapshot feature used         */
   u64 mem_limit;                        /* Memory cap for child (MB)        */
 

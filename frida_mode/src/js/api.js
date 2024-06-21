@@ -381,9 +381,8 @@ class Afl {
         Afl.jsApiIjonMapInc((pc & 0xffffffff) ^ val);
       }
 
-      static max(context, val) {
-        console.log("ERROR");
-        // Afl.jsApiIjonMax(addr, val);
+      static max(addr, val) {
+        Afl.jsApiIjonMax(addr, val);
       }
 
       static min(context, val) {
@@ -447,7 +446,7 @@ Module.getExportByName(null, "write"), "int", ["int", "pointer", "int"]);
 
 Afl.jsApiIjonXorState = Afl.jsApiGetFunction("js_api_ijon_xor_state", "void", ["uint32"]);
 Afl.jsApiIjonPushState = Afl.jsApiGetFunction("js_api_ijon_push_state", "void", ["uint32"]);
-// Afl.jsApiIjonMax = Afl.jsApiGetFunction("js_api_ijon_max", "void", ["uint32", "uint64"]);
+Afl.jsApiIjonMax = Afl.jsApiGetFunction("js_api_ijon_max", "void", ["uint32", "uint32"]);
 // Afl.jsApiIjonMin = Afl.jsApiGetFunction("js_api_ijon_min", "void", ["uint32", "uint64"]);
 Afl.jsApiIjonMapSet = Afl.jsApiGetFunction("js_api_ijon_map_set", "void", ["uint32"]);
 Afl.jsApiIjonMapInc = Afl.jsApiGetFunction("js_api_ijon_map_inc", "void", ["uint32"]);

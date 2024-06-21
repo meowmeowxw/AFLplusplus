@@ -29,6 +29,30 @@
   #define NAME_MAX _XOPEN_NAME_MAX
 #endif
 
+/* Check if the new execution resulted in new maximums.
+   It writes inside the maximised array the indexes of variables that were maximised */
+
+void ijon_new_max(afl_state_t *afl, u32 *maximised) {
+  // printf("[FUZZER] ijon_max init | afl->fsrv.trace_bits: %p, afl->fsrv.ijon_bits: %p\n", afl->fsrv.trace_bits, afl->fsrv.ijon_bits);
+  u32 *virgin_max = afl->virgin_bits_ijon;
+  u32 *max_area = (u32 *)((u8 *)afl->fsrv.trace_bits + afl->fsrv.map_size);
+
+  for (u32 i = 0; i < afl->fsrv.ijon_map_size; i++) {
+    if (max_area[i] > virgin_max[i]) {
+      // If this is the first time that we maximise this variable increase number of
+      // queued entries
+      if (virgin_max[i] == 0) {
+        afl->queued_items_ijon++;
+      }
+      fprintf(stderr, "[FUZZER] found new max: virgin_max[%d]: %d, max_area[%d]: %d\n", i, virgin_max[i], i, max_area[i]);
+      *maximised = i;
+      maximised++;
+      virgin_max[i] = max_area[i];
+    }
+  }
+}
+
+
 /* Write bitmap to file. The bitmap is useful mostly for the secret
    -B option, to focus a separate fuzzing session on a particular
    interesting input without rediscovering all the others. */
@@ -455,6 +479,20 @@ void write_crash_readme(afl_state_t *afl) {
 u8 __attribute__((hot))
 save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
 
+  u8  fn[PATH_MAX];
+  u8 *queue_fn = "";
+  u8  new_bits = 0, keeping = 0, res, classified = 0, is_timeout = 0,
+     need_hash = 1;
+  s32 fd;
+  u64 cksum = 0;
+  u32 maximised[afl->fsrv.ijon_map_size];
+  memset(maximised, 0, afl->fsrv.ijon_map_size * sizeof(u32));
+
+  ijon_new_max(afl, maximised);
+  if (*maximised) {
+    goto save_to_queue;
+  }
+
   if (unlikely(len == 0)) { return 0; }
 
   if (unlikely(fault == FSRV_RUN_TMOUT && afl->afl_env.afl_ignore_timeouts)) {
@@ -474,12 +512,6 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
 
   }
 
-  u8  fn[PATH_MAX];
-  u8 *queue_fn = "";
-  u8  new_bits = 0, keeping = 0, res, classified = 0, is_timeout = 0,
-     need_hash = 1;
-  s32 fd;
-  u64 cksum = 0;
 
   /* Update path frequency. */
 
@@ -563,6 +595,25 @@ save_if_interesting(afl_state_t *afl, void *mem, u32 len, u8 fault) {
     }
 
     add_to_queue(afl, queue_fn, len, 0);
+    if (unlikely(*maximised)) {
+      new_bits = 2;
+      keeping = 1;
+      need_hash = 0;
+      for (u32 i = 0; i < afl->fsrv.ijon_map_size; i++) {
+        if (maximised[i] == 0) {
+          break;
+        }
+        fprintf(stderr, "[FUZZER] update inside queue_ijon[%u] index: %u\n",
+                maximised[i], afl->queued_items - 1);
+        // Overwrite / write the best maximum for variable maximised[i]
+        // with the index of the top of the queue (current entry)
+        afl->queue_ijon[maximised[i]] = afl->queued_items - 1;
+      }
+      afl->queue_top->is_ijon = 1;
+      afl->queue_top->favored = 1;
+    } else {
+      afl->queue_top->is_ijon = 0;
+    }
 
     if (unlikely(afl->fuzz_mode) &&
         likely(afl->switch_fuzz_mode && !afl->non_instrumented_mode)) {

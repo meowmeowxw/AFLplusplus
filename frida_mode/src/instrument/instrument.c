@@ -495,3 +495,12 @@ void ijon_map_inc(uint32_t addr) {
   //printf("[*] ijon_map_inc | __afl_area_ptr: %lx\n", __afl_area_ptr[addr % __afl_map_size]);
   instrument_increment_map((__afl_state ^ addr) % __afl_map_size);
 }
+
+void ijon_max(uint32_t addr, uint32_t val){
+  u32 *__afl_max_ptr = (u32 *)((u8 *)(__afl_area_ptr + __afl_map_size));
+  addr %= __afl_ijon_map_size;
+  printf("[*] ijon_max | __afl_max_ptr[%d] = %d | val: %d\n", addr, __afl_max_ptr[addr], val);
+  if(__afl_max_ptr[addr] < val) {
+    __afl_max_ptr[addr] = val;
+  }
+}

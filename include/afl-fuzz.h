@@ -204,6 +204,7 @@ struct queue_entry {
   u8 *fname;                            /* File name for the test case      */
   u32 len;                              /* Input length                     */
   u32 id;                               /* entry number in queue_buf        */
+  u8 is_ijon;                           /* is an ijon entry ?               */
 
   u8 colorized,                         /* Do not run redqueen stage again  */
       cal_failed;                       /* Calibration failed?              */
@@ -601,6 +602,9 @@ typedef struct afl_state {
       *virgin_tmout,                    /* Bits we haven't seen in tmouts   */
       *virgin_crash;                    /* Bits we haven't seen in crashes  */
 
+  u32 *virgin_bits_ijon;                /* Map used by ijon max to store the 
+                                           global maximums                  */
+
   double *alias_probability;            /* alias weighted probabilities     */
   u32    *alias_table;                /* alias weighted random lookup table */
   u32     active_items;                 /* enabled entries in the queue     */
@@ -614,6 +618,7 @@ typedef struct afl_state {
       clear_screen;                     /* Window resized?                  */
 
   u32 queued_items,                     /* Total number of queued testcases */
+      queued_items_ijon,                /* Total number of ijon queued testcases */
       queued_variable,                  /* Testcases with variable behavior */
       queued_at_start,                  /* Total number of initial inputs   */
       queued_discovered,                /* Items discovered during this run */
@@ -709,6 +714,8 @@ typedef struct afl_state {
 
   // growing buf
   struct queue_entry **queue_buf;
+  u32 *queue_ijon;                      /* Indexes of ijon entries that are
+                                           stored inside queue_buf          */
 
   struct queue_entry **top_rated;           /* Top entries for bitmap bytes */
 
@@ -1175,6 +1182,7 @@ void destroy_queue(afl_state_t *);
 void update_bitmap_score(afl_state_t *, struct queue_entry *);
 void cull_queue(afl_state_t *);
 u32  calculate_score(afl_state_t *, struct queue_entry *);
+s32  select_next_queue_entry_ijon(afl_state_t *afl, u8 n);
 
 /* Bitmap */
 

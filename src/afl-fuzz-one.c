@@ -320,6 +320,7 @@ static void locate_diffs(u8 *ptr1, u8 *ptr2, u32 len, s32 *first, s32 *last) {
 
 #endif                                                     /* !IGNORE_FINDS */
 
+
 /* Take the current entry from the queue, fuzz it for a while. This
    function is a tad too long... returns 0 if fuzzed successfully, 1 if
    skipped or bailed out. */
@@ -331,7 +332,7 @@ u8 fuzz_one_original(afl_state_t *afl) {
   u32 i;
   u8 *in_buf, *out_buf, *orig_in, *ex_tmp;
   u64 havoc_queued = 0, orig_hit_cnt, new_hit_cnt = 0, prev_cksum, _prev_cksum;
-  u32 splice_cycle = 0, perf_score = 100, orig_perf;
+  u32 splice_cycle = 0, perf_score = 100, orig_perf = perf_score;
 
   u8 ret_val = 1, doing_det = 0;
 
@@ -424,12 +425,17 @@ u8 fuzz_one_original(afl_state_t *afl) {
   orig_in = in_buf = queue_testcase_get(afl, afl->queue_cur);
   len = afl->queue_cur->len;
 
+
   out_buf = afl_realloc(AFL_BUF_PARAM(out), len);
   if (unlikely(!out_buf)) { PFATAL("alloc"); }
 
   afl->subseq_tmouts = 0;
 
   afl->cur_depth = afl->queue_cur->depth;
+
+  if (afl->queue_cur->is_ijon) {
+    goto havoc_stage;
+  }
 
   /*******************************************
    * CALIBRATION (only if failed earlier on) *

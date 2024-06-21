@@ -60,6 +60,7 @@ inline u32 select_next_queue_entry(afl_state_t *afl) {
 
 }
 
+
 /* create the alias table that allows weighted random selection - expensive */
 
 void create_alias_table(afl_state_t *afl) {
@@ -606,6 +607,7 @@ static u8 check_if_text(afl_state_t *afl, struct queue_entry *q) {
   return 0;
 
 }
+
 
 /* Append new test case to the queue. */
 
@@ -1506,3 +1508,14 @@ inline void queue_testcase_store_mem(afl_state_t *afl, struct queue_entry *q,
 
 }
 
+/* Select with n% probability to schedule from an ijon entry
+   that is selected randomly */
+s32 select_next_queue_entry_ijon(afl_state_t *afl, u8 n)  {
+  bool should_schedule = (random() % 100) > n && afl->queued_items_ijon > 0;
+  if (!should_schedule) {
+    return -1;
+  }
+  uint32_t rnd = random() % afl->queued_items_ijon;
+  fprintf(stderr, "[FUZZER] get_ijon_input | scheduling %d, rnd: %d\n", afl->queue_ijon[rnd], rnd);
+  return afl->queue_ijon[rnd];
+}

@@ -2249,7 +2249,10 @@ int main(int argc, char **argv_orig, char **envp) {
 
     u32 old_map_size = map_size;
     map_size = afl->fsrv.real_map_size = afl->fsrv.map_size = MAP_SIZE;
+    afl->fsrv.ijon_real_map_size = afl->fsrv.ijon_map_size = MAP_SIZE_IJON;
+    fprintf(stderr, "[FUZZER] map_size: %x | ijon_map_size: %x\n", afl->fsrv.map_size, afl->fsrv.ijon_map_size);
     afl->virgin_bits = ck_realloc(afl->virgin_bits, map_size);
+    afl->virgin_bits_ijon = ck_realloc(afl->virgin_bits_ijon, afl->fsrv.ijon_map_size * (sizeof(u32)));
     afl->virgin_tmout = ck_realloc(afl->virgin_tmout, map_size);
     afl->virgin_crash = ck_realloc(afl->virgin_crash, map_size);
     afl->var_bytes = ck_realloc(afl->var_bytes, map_size);
@@ -2258,7 +2261,11 @@ int main(int argc, char **argv_orig, char **envp) {
     afl->clean_trace_custom = ck_realloc(afl->clean_trace_custom, map_size);
     afl->first_trace = ck_realloc(afl->first_trace, map_size);
     afl->map_tmp_buf = ck_realloc(afl->map_tmp_buf, map_size);
-
+    afl->queue_ijon = ck_realloc(afl->queue_ijon, afl->fsrv.ijon_map_size * sizeof(void *));
+    afl->queued_items_ijon = 0;
+    memset(afl->queue_ijon, 0, afl->fsrv.ijon_map_size * sizeof(void *));
+    memset(afl->virgin_bits_ijon, 0, afl->fsrv.ijon_map_size * sizeof(u32));
+    fprintf(stderr, "[FUZZER] after memset\n");
     if (old_map_size < map_size) {
 
       memset(afl->var_bytes + old_map_size, 0, map_size - old_map_size);
@@ -2273,9 +2280,13 @@ int main(int argc, char **argv_orig, char **envp) {
 
   }
 
+  fprintf(stderr, "[FUZZER] before shm_init\n");
   afl->argv = use_argv;
   afl->fsrv.trace_bits =
       afl_shm_init(&afl->shm, afl->fsrv.map_size, afl->non_instrumented_mode);
+  // TODO doesn't really work ? It might be reset somewhere else
+  afl->fsrv.ijon_bits = (u32 *)((u8 *)(afl->fsrv.trace_bits + afl->fsrv.map_size));
+  fprintf(stderr, "[FUZZER] after shm_init\n");
 
   if (!afl->non_instrumented_mode && !afl->fsrv.qemu_mode &&
       !afl->unicorn_mode && !afl->fsrv.frida_mode && !afl->fsrv.cs_mode &&
@@ -2487,6 +2498,9 @@ int main(int argc, char **argv_orig, char **envp) {
     if (!afl->q_testcase_cache) { PFATAL("malloc failed for cache entries"); }
 
   }
+
+  afl->fsrv.real_map_size = afl->fsrv.map_size = MAP_SIZE - MAP_SIZE_IJON;
+  fprintf(stderr, "[FUZZER] before cull_queue\n");
 
   cull_queue(afl);
 
@@ -2857,12 +2871,16 @@ int main(int argc, char **argv_orig, char **envp) {
 
           }
 
-          do {
-
-            afl->current_entry = select_next_queue_entry(afl);
-
-          } while (unlikely(afl->current_entry >= afl->queued_items));
-
+          s32 current_entry = select_next_queue_entry_ijon(afl, 50);
+          if (current_entry == -1) {
+            fprintf(stderr, "[FUZZER] select queue entry with normal method\n");
+            do {
+              afl->current_entry = select_next_queue_entry(afl);
+            } while (unlikely(afl->current_entry >= afl->queued_items));
+          } else {
+            fprintf(stderr, "[FUZZER] selected element through ijon scheduling: %d\n", current_entry);
+            afl->current_entry = current_entry;
+          }
           afl->queue_cur = afl->queue_buf[afl->current_entry];
 
         }

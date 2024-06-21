@@ -115,6 +115,7 @@ int        __afl_sharedmem_fuzzing __attribute__((weak));
 
 u32 __afl_final_loc;
 u32 __afl_map_size = MAP_SIZE;
+u32 __afl_ijon_map_size = MAP_SIZE_IJON;
 u32 __afl_dictionary_len;
 u64 __afl_map_addr;
 u32 __afl_first_final_loc;
@@ -748,6 +749,17 @@ static void __afl_map_shm(void) {
     if (tmp >= 16 && tmp <= 32) { __afl_cmplog_max_len = tmp; }
 
   }
+
+
+  __afl_map_size = MAP_SIZE - MAP_SIZE_IJON;
+  __afl_ijon_map_size = MAP_SIZE_IJON;
+  fprintf(stderr,
+          "DEBUG: (3) id_str %s, __afl_area_ptr %p, __afl_area_initial %p, "
+          "__afl_area_ptr_dummy %p, __afl_map_addr 0x%llx, MAP_SIZE "
+          "%u, __afl_final_loc %u, __afl_map_size %u",
+          id_str == NULL ? "<null>" : id_str, __afl_area_ptr,
+          __afl_area_initial, __afl_area_ptr_dummy, __afl_map_addr, MAP_SIZE,
+          __afl_final_loc, __afl_map_size);
 
 }
 
