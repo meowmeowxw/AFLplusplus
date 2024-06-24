@@ -2660,6 +2660,7 @@ int main(int argc, char **argv_orig, char **envp) {
 
         if (afl->current_entry >= afl->queued_items) { afl->current_entry = 0; }
 
+        // fprintf(stderr, "[FUZZER] SELECTION | FIRST OPTION\n");
         afl->queue_cur = afl->queue_buf[afl->current_entry];
 
         if (unlikely(seek_to)) {
@@ -2672,6 +2673,7 @@ int main(int argc, char **argv_orig, char **envp) {
           }
 
           afl->current_entry = seek_to;
+          fprintf(stderr, "[FUZZER] SELECTION SECOND OPTION\n");
           afl->queue_cur = afl->queue_buf[seek_to];
           seek_to = 0;
 
@@ -2857,10 +2859,12 @@ int main(int argc, char **argv_orig, char **envp) {
 
           */
 
+          // fprintf(stderr, "[FUZZER] SELECTION THIRD OPTION\n");
           afl->queue_cur = afl->queue_buf[afl->current_entry];
 
         } else {
 
+          // fprintf(stderr, "[FUZZER] SELECTION FOURTH OPTION\n");
           if (unlikely(prev_queued_items < afl->queued_items ||
                        afl->reinit_table)) {
 
@@ -2873,12 +2877,12 @@ int main(int argc, char **argv_orig, char **envp) {
 
           s32 current_entry = select_next_queue_entry_ijon(afl, 50);
           if (current_entry == -1) {
-            fprintf(stderr, "[FUZZER] select queue entry with normal method\n");
+            // fprintf(stderr, "[FUZZER] select queue entry with normal method\n");
             do {
               afl->current_entry = select_next_queue_entry(afl);
             } while (unlikely(afl->current_entry >= afl->queued_items));
           } else {
-            fprintf(stderr, "[FUZZER] selected element through ijon scheduling: %d\n", current_entry);
+            // fprintf(stderr, "[FUZZER] selected element through ijon scheduling: %d\n", current_entry);
             afl->current_entry = current_entry;
           }
           afl->queue_cur = afl->queue_buf[afl->current_entry];
@@ -2937,6 +2941,7 @@ int main(int argc, char **argv_orig, char **envp) {
 
         } else {
 
+          // fprintf(stderr, "[FUZZER] SELECTION FIFTH OPTION\n");
           afl->queue_cur = afl->queue_buf[afl->current_entry];
 
         }

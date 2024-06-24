@@ -1516,6 +1516,6 @@ s32 select_next_queue_entry_ijon(afl_state_t *afl, u8 n)  {
     return -1;
   }
   uint32_t rnd = random() % afl->queued_items_ijon;
-  fprintf(stderr, "[FUZZER] get_ijon_input | scheduling %d, rnd: %d\n", afl->queue_ijon[rnd], rnd);
+  // fprintf(stderr, "[FUZZER] get_ijon_input | scheduling %d, rnd: %d\n", afl->queue_ijon[rnd], rnd);
   return afl->queue_ijon[rnd];
 }
